@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Web2OS — Ask before you act</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FFFFFF;
+    --bg-soft:#F5F7FC;
+    --ink:#12141C;
+    --muted:#68708A;
+    --border:#E5E8F0;
+    --accent:#3B5BFF;
+    --accent-soft:#EDF0FF;
+    --allow:#0FA968;
+    --allow-soft:#E7F9F1;
+    --deny:#E5484D;
+    --deny-soft:#FDECEC;
+    --code-bg:#12141C;
+    --code-text:#E7E9F5;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{font-family:'Space Grotesk',sans-serif;letter-spacing:-0.01em;}
+  code,.mono{font-family:'IBM Plex Mono',monospace;}
+  a{color:inherit;}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 28px;}
+
+  /* ── Nav ── */
+  nav{
+    position:sticky; top:0; z-index:50;
+    background:rgba(255,255,255,0.86);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border);
+  }
+  nav .wrap{display:flex;align-items:center;height:68px;gap:36px;}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:600;font-size:17px;}
+  .logo-mark{
+    width:26px;height:26px;border-radius:7px;
+    background:linear-gradient(135deg,#3B5BFF,#7C93FF);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:700;font-family:'Space Grotesk',sans-serif;font-size:14px;
+  }
+  .nav-links{display:flex;gap:28px;font-size:14px;color:var(--muted);margin-left:8px;}
+  .nav-links a:hover{color:var(--ink);}
+  .nav-cta{
+    margin-left:auto;
+    background:var(--accent); color:#fff;
+    font-weight:600; font-size:13.5px;
+    padding:9px 18px; border-radius:8px;
+    text-decoration:none;
+    box-shadow:0 6px 18px rgba(59,91,255,0.28);
+  }
+  .nav-cta:hover{background:#3050ee;}
+
+  /* ── Hero ── */
+  .hero{
+    padding:84px 0 66px;
+    position:relative;
+    overflow:hidden;
+  }
+  .hero::before{
+    content:"";
+    position:absolute; top:-180px; right:-160px;
+    width:520px; height:520px; border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, rgba(59,91,255,0.14), rgba(59,91,255,0) 70%);
+    pointer-events:none;
+  }
+  .hero-grid{display:grid; grid-template-columns:1.05fr 0.95fr; gap:56px; align-items:center; position:relative;}
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent);
+    background:var(--accent-soft);
+    padding:6px 12px; border-radius:20px;
+    margin-bottom:22px;
+  }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--allow); animation:pulse 1.8s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;} 50%{opacity:0.35;}}
+  .hero h1{font-size:48px; font-weight:600; line-height:1.06; margin-bottom:20px;}
+  .hero h1 em{
+    font-style:normal;
+    background:linear-gradient(100deg,#3B5BFF,#7C4DFF);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .hero p.lead{color:var(--muted); font-size:16.5px; max-width:480px; margin-bottom:30px;}
+  .hero-ctas{display:flex; gap:14px;}
+  .btn{
+    display:inline-flex; align-items:center; gap:8px;
+    font-weight:600; font-size:14.5px; padding:12px 22px; border-radius:9px;
+    text-decoration:none; cursor:pointer; border:none;
+  }
+  .btn-accent{background:var(--accent); color:#fff; box-shadow:0 8px 22px rgba(59,91,255,0.28);}
+  .btn-accent:hover{background:#3050ee;}
+  .btn-ghost{background:#fff; color:var(--ink); border:1px solid var(--border);}
+  .btn-ghost:hover{border-color:#c7cede;}
+
+  /* ── Demo dialog mock ── */
+  .demo-stage{
+    background:var(--bg-soft); border:1px solid var(--border); border-radius:18px;
+    padding:26px; position:relative; min-height:360px;
+    display:flex; flex-direction:column;
+    box-shadow:0 24px 60px -20px rgba(20,25,50,0.18);
+  }
+  .demo-caption{font-size:12.5px; color:var(--muted); margin-bottom:16px; font-family:'IBM Plex Mono',monospace;}
+  .fake-site{
+    background:#fff; border-radius:12px; padding:20px; flex:1;
+    display:flex; flex-direction:column; gap:14px; border:1px solid var(--border);
+  }
+  .fake-url{font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--muted);}
+  .fake-btn{
+    align-self:flex-start; background:var(--accent-soft); color:var(--accent); border:1px solid #D6DEFF;
+    padding:10px 16px; border-radius:8px; font-size:13.5px; font-weight:600; cursor:pointer;
+  }
+  .fake-btn:hover{background:#e2e7ff;}
+  .fake-log{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--muted); min-height:20px;}
+
+  .popup{
+    position:absolute; left:50%; bottom:26px; transform:translate(-50%,120%);
+    width:88%; max-width:360px; background:#fff; color:#20232B;
+    border-radius:14px; box-shadow:0 30px 60px rgba(15,20,40,0.28);
+    overflow:hidden; opacity:0; transition:transform .38s cubic-bezier(.2,.9,.3,1.3), opacity .3s;
+    border:1px solid var(--border);
+  }
+  .popup.show{transform:translate(-50%,0); opacity:1;}
+  .popup-hdr{background:var(--ink); color:#fff; padding:13px 16px; font-size:13px; font-weight:600;}
+  .popup-body{padding:16px;}
+  .popup-body .who{font-size:13px; font-weight:600; margin-bottom:8px;}
+  .popup-badge{
+    display:inline-block; background:var(--accent-soft); color:var(--accent); font-size:12px;
+    padding:4px 10px; border-radius:6px; margin-bottom:12px; font-weight:600;
+  }
+  .popup-details{
+    background:var(--bg-soft); border:1px solid var(--border); border-radius:7px; padding:8px 10px;
+    font-family:'IBM Plex Mono',monospace; font-size:11px; color:#4a4e5c; margin-bottom:14px;
+  }
+  .popup-actions{display:flex; justify-content:flex-end; gap:8px;}
+  .popup-actions button{
+    border:none; border-radius:7px; padding:8px 16px; font-weight:600; font-size:12.5px; cursor:pointer;
+  }
+  .btn-deny{background:var(--deny); color:#fff;}
+  .btn-allow{background:var(--allow); color:#fff;}
+
+  /* ── Section shared ── */
+  section{padding:68px 0;}
+  .section-hd{max-width:620px; margin-bottom:44px;}
+  .kicker{font-family:'IBM Plex Mono',monospace; color:var(--accent); font-size:12.5px; margin-bottom:12px; font-weight:600;}
+  .section-hd h2{font-size:30px; font-weight:600;}
+  .section-hd p{color:var(--muted); margin-top:12px; font-size:15px;}
+  .band{background:var(--bg-soft);}
+  .rule{border-top:1px solid var(--border);}
+
+  /* ── How it works ── */
+  .steps{display:grid; grid-template-columns:repeat(3,1fr); gap:24px;}
+  .step{background:#fff; border:1px solid var(--border); border-radius:14px; padding:26px;
+        box-shadow:0 10px 30px -18px rgba(20,25,50,0.16);}
+  .step .num{font-family:'Space Grotesk',sans-serif; font-size:13px; color:var(--accent); margin-bottom:14px; font-weight:600;}
+  .step h3{font-size:17px; margin-bottom:10px; font-weight:600;}
+  .step p{color:var(--muted); font-size:14px;}
+
+  /* ── Actions grid ── */
+  .actions-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:14px;}
+  .action-card{
+    background:#fff; border:1px solid var(--border); border-radius:12px;
+    padding:18px 14px; text-align:center;
+  }
+  .action-card .ic{font-size:22px; margin-bottom:10px;}
+  .action-card code{display:block; font-size:12px; color:var(--accent); margin-bottom:6px; font-weight:600;}
+  .action-card span{font-size:12px; color:var(--muted);}
+
+  /* ── Code tabs ── */
+  .code-card{background:var(--code-bg); border-radius:16px; overflow:hidden;
+             box-shadow:0 24px 60px -20px rgba(20,25,50,0.35);}
+  .tabs{display:flex; border-bottom:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.03);}
+  .tab{
+    padding:13px 20px; font-family:'IBM Plex Mono',monospace; font-size:13px; color:#8890AC;
+    cursor:pointer; border-bottom:2px solid transparent;
+  }
+  .tab.active{color:#fff; border-bottom-color:var(--accent);}
+  pre{
+    padding:22px 24px; overflow-x:auto; font-family:'IBM Plex Mono',monospace; font-size:13px;
+    line-height:1.65; color:var(--code-text);
+  }
+  .pane{display:none;}
+  .pane.active{display:block;}
+  .tok-kw{color:#7C93FF;} .tok-str{color:#7FD9A8;} .tok-com{color:#6C7593;} .tok-fn{color:#82C6E8;}
+
+  /* ── Security ── */
+  .sec-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:20px;}
+  .sec-card{background:#fff; border:1px solid var(--border); border-radius:14px; padding:22px;
+            box-shadow:0 10px 30px -18px rgba(20,25,50,0.16);}
+  .sec-card .flag{
+    display:inline-flex; align-items:center; gap:7px; font-size:12px; color:var(--allow);
+    font-family:'IBM Plex Mono',monospace; margin-bottom:10px; font-weight:600;
+  }
+  .sec-card h3{font-size:15.5px; margin-bottom:8px; font-weight:600;}
+  .sec-card p{color:var(--muted); font-size:13.5px;}
+
+  /* ── CTA / footer ── */
+  .cta-band{
+    background:linear-gradient(135deg,#12141C,#242847);
+    border-radius:20px;
+    padding:52px; text-align:center; color:#fff;
+  }
+  .cta-band h2{font-size:26px; margin-bottom:12px;}
+  .cta-band p{color:#B7BEDA; margin-bottom:26px;}
+
+  .signup-form{
+    display:flex; gap:10px; max-width:520px; margin:0 auto; flex-wrap:wrap; justify-content:center;
+  }
+  .signup-form input{
+    flex:1; min-width:180px; padding:12px 14px; border-radius:9px; border:1px solid rgba(255,255,255,0.14);
+    background:rgba(255,255,255,0.06); color:#fff; font-size:14px; font-family:'Inter',sans-serif;
+  }
+  .signup-form input::placeholder{color:#8890AC;}
+  .signup-form input:focus{outline:none; border-color:var(--accent); background:rgba(255,255,255,0.1);}
+  .signup-form button{
+    background:var(--accent); color:#fff; border:none; border-radius:9px; padding:12px 22px;
+    font-weight:600; font-size:14px; cursor:pointer; white-space:nowrap;
+  }
+  .signup-form button:hover{background:#3050ee;}
+  .signup-form button:disabled{opacity:0.6; cursor:default;}
+
+  .signup-result{max-width:520px; margin:20px auto 0; text-align:left;}
+  .key-box{
+    display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.14); border-radius:9px; padding:10px 14px;
+  }
+  .key-box code{flex:1; font-family:'IBM Plex Mono',monospace; font-size:13px; color:#7FD9A8; word-break:break-all;}
+  .key-box button{
+    background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.16);
+    border-radius:7px; padding:7px 13px; font-size:12.5px; font-weight:600; cursor:pointer;
+  }
+  .key-box button:hover{background:rgba(255,255,255,0.18);}
+  .key-note{color:#B7BEDA; font-size:13px; margin-top:10px;}
+  .key-error{color:#FF9B9B; font-size:13.5px;}
+  .test-key-btn{
+    display:block; margin-top:14px; background:transparent; color:#fff;
+    border:1px solid rgba(255,255,255,0.22); border-radius:8px; padding:10px 16px;
+    font-size:13px; font-weight:600; cursor:pointer;
+  }
+  .test-key-btn:hover{background:rgba(255,255,255,0.08);}
+  .test-key-btn:disabled{opacity:0.6; cursor:default;}
+  footer{padding:34px 0 50px; border-top:1px solid var(--border); color:var(--muted); font-size:13px;
+         display:flex; justify-content:space-between; align-items:center;}
+
+  @media (max-width:880px){
+    .hero-grid{grid-template-columns:1fr;}
+    .steps{grid-template-columns:1fr;}
+    .actions-grid{grid-template-columns:repeat(2,1fr);}
+    .sec-grid{grid-template-columns:1fr;}
+    .nav-links{display:none;}
+    .hero h1{font-size:34px;}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="logo"><span class="logo-mark">B</span> Web2OS</div>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#actions">Actions</a>
+      <a href="#docs">Docs</a>
+      <a href="#security">Security</a>
+    </div>
+    <a class="nav-cta" href="#access">Request API Access</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow"><span class="dot"></span> EVERY ACTION IS APPROVED ON-DEVICE</div>
+      <h1>Ask before<br>you <em>act</em>.</h1>
+      <p class="lead">Web2OS lets your website request real actions — files, folders, links — on a
+        user's own computer. Nothing runs until the person sitting at that computer clicks Allow.
+        No silent installs, no self-issued keys, no background access without a visible prompt.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-accent" href="#access">Request API Access</a>
+        <a class="btn btn-ghost" href="#docs">Read the docs</a>
+      </div>
+    </div>
+
+    <div class="demo-stage">
+      <div class="demo-caption">// live demo — this is what your users see</div>
+      <div class="fake-site">
+        <div class="fake-url">yourcompany.com</div>
+        <p style="font-size:14px;color:var(--muted)">"Save my export as a file on my computer"</p>
+        <button class="fake-btn" id="demoBtn">📄 &nbsp;Request: create_file</button>
+        <div class="fake-log" id="demoLog"></div>
+      </div>
+      <div class="popup" id="popup">
+        <div class="popup-hdr">🔐 &nbsp;Web2OS — Permission Request</div>
+        <div class="popup-body">
+          <div class="who">'YourCompany' is requesting:</div>
+          <span class="popup-badge">📄 Create a file on your computer</span>
+          <div class="popup-details">path: ~/Desktop/export.csv<br>content: "id,total\n1,42.00…"</div>
+          <div class="popup-actions">
+            <button class="btn-deny" id="popDeny">✗ Deny</button>
+            <button class="btn-allow" id="popAllow">✓ Allow</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="how">
+  <div class="wrap">
+    <div class="section-hd">
+      <div class="kicker">HOW IT WORKS</div>
+      <h2>Three steps, every time.</h2>
+      <p>There's no path from "call the API" to "action performed" that skips the person at the keyboard.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="num">01</div>
+        <h3>Get a key</h3>
+        <p>Keys are issued from the user's own Web2OS Dashboard, or requested live — either way the
+          user sees who's asking and approves it. There's no self-serve endpoint that hands out access quietly.</p>
+      </div>
+      <div class="step">
+        <div class="num">02</div>
+        <h3>Call the API</h3>
+        <p>Your site sends a normal POST request to the Web2OS agent running on <code class="mono">127.0.0.1</code> —
+          your API key, the action, and its payload.</p>
+      </div>
+      <div class="step">
+        <div class="num">03</div>
+        <h3>The user decides</h3>
+        <p>A native popup shows exactly what you're asking to do. Allow runs it. Deny — or 65 seconds of
+          silence — rejects it. Every decision is written to their activity log.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="actions" class="band">
+  <div class="wrap">
+    <div class="section-hd">
+      <div class="kicker">SUPPORTED ACTIONS</div>
+      <h2>A small, deliberate set of actions.</h2>
+      <p>Web2OS is scoped to what a browser can't already do on its own — not a general remote-control surface.</p>
+    </div>
+    <div class="actions-grid">
+      <div class="action-card"><div class="ic">📄</div><code>create_file</code><span>Write a new file</span></div>
+      <div class="action-card"><div class="ic">📖</div><code>read_file</code><span>Read a file's contents</span></div>
+      <div class="action-card"><div class="ic">🗑️</div><code>delete_file</code><span>Remove a file</span></div>
+      <div class="action-card"><div class="ic">📁</div><code>list_directory</code><span>List a folder</span></div>
+      <div class="action-card"><div class="ic">🌐</div><code>open_url</code><span>Open a link</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="docs">
+  <div class="wrap">
+    <div class="section-hd">
+      <div class="kicker">INTEGRATION</div>
+      <h2>Call it from wherever you already are.</h2>
+      <p>Same endpoint, three languages. The agent listens on <code class="mono">http://127.0.0.1:8765</code>
+        on the user's own machine.</p>
+    </div>
+
+    <div class="code-card">
+      <div class="tabs">
+        <div class="tab active" data-tab="py">Python</div>
+        <div class="tab" data-tab="js">JavaScript</div>
+        <div class="tab" data-tab="html">HTML</div>
+      </div>
+
+      <div class="pane active" id="pane-py"><pre><span class="tok-kw">import</span> requests
+
+resp = requests.post(
+    <span class="tok-str">"http://127.0.0.1:8765/api/action"</span>,
+    json={
+        <span class="tok-str">"api_key"</span>: <span class="tok-str">"w2os_your_issued_key"</span>,
+        <span class="tok-str">"action_type"</span>: <span class="tok-str">"create_file"</span>,
+        <span class="tok-str">"payload"</span>: {
+            <span class="tok-str">"path"</span>: <span class="tok-str">"~/Desktop/export.csv"</span>,
+            <span class="tok-str">"content"</span>: <span class="tok-str">"id,total\n1,42.00\n"</span>,
+        },
+    },
+)
+
+data = resp.json()
+<span class="tok-kw">if</span> data[<span class="tok-str">"success"</span>]:
+    <span class="tok-fn">print</span>(<span class="tok-str">"Saved:"</span>, data[<span class="tok-str">"message"</span>])
+<span class="tok-kw">else</span>:
+    <span class="tok-com"># user denied, or Web2OS isn't running / is paused</span>
+    <span class="tok-fn">print</span>(<span class="tok-str">"Not saved:"</span>, data[<span class="tok-str">"message"</span>])
+</pre></div>
+
+      <div class="pane" id="pane-js"><pre><span class="tok-kw">async function</span> <span class="tok-fn">saveExport</span>(csvText) {
+  <span class="tok-kw">const</span> resp = <span class="tok-kw">await</span> <span class="tok-fn">fetch</span>(<span class="tok-str">"http://127.0.0.1:8765/api/action"</span>, {
+    method: <span class="tok-str">"POST"</span>,
+    headers: { <span class="tok-str">"Content-Type"</span>: <span class="tok-str">"application/json"</span> },
+    body: <span class="tok-fn">JSON.stringify</span>({
+      api_key: <span class="tok-str">"w2os_your_issued_key"</span>,
+      action_type: <span class="tok-str">"create_file"</span>,
+      payload: { path: <span class="tok-str">"~/Desktop/export.csv"</span>, content: csvText },
+    }),
+  });
+
+  <span class="tok-kw">const</span> data = <span class="tok-kw">await</span> resp.json();
+  <span class="tok-kw">if</span> (data.success) {
+    <span class="tok-fn">console.log</span>(<span class="tok-str">"Saved:"</span>, data.message);
+  } <span class="tok-kw">else</span> {
+    <span class="tok-com">// user denied, or Web2OS isn't running / is paused</span>
+    <span class="tok-fn">console.warn</span>(<span class="tok-str">"Not saved:"</span>, data.message);
+  }
+}
+</pre></div>
+
+      <div class="pane" id="pane-html"><pre>&lt;<span class="tok-kw">button</span> id=<span class="tok-str">"exportBtn"</span>&gt;Save export to my computer&lt;/<span class="tok-kw">button</span>&gt;
+
+&lt;<span class="tok-kw">script</span>&gt;
+document.getElementById(<span class="tok-str">"exportBtn"</span>).addEventListener(<span class="tok-str">"click"</span>, <span class="tok-kw">async</span> () =&gt; {
+  <span class="tok-kw">const</span> r = <span class="tok-kw">await</span> <span class="tok-fn">fetch</span>(<span class="tok-str">"http://127.0.0.1:8765/api/action"</span>, {
+    method: <span class="tok-str">"POST"</span>,
+    headers: { <span class="tok-str">"Content-Type"</span>: <span class="tok-str">"application/json"</span> },
+    body: <span class="tok-fn">JSON.stringify</span>({
+      api_key: <span class="tok-str">"w2os_your_issued_key"</span>,
+      action_type: <span class="tok-str">"create_file"</span>,
+      payload: { path: <span class="tok-str">"~/Desktop/export.csv"</span>, content: <span class="tok-str">"id,total\n1,42.00\n"</span> },
+    }),
+  });
+  <span class="tok-kw">const</span> data = <span class="tok-kw">await</span> r.json();
+  <span class="tok-fn">alert</span>(data.success ? <span class="tok-str">"Saved!"</span> : data.message);
+});
+&lt;/<span class="tok-kw">script</span>&gt;
+</pre></div>
+    </div>
+  </div>
+</section>
+
+<section id="security" class="band">
+  <div class="wrap">
+    <div class="section-hd">
+      <div class="kicker">SECURITY MODEL</div>
+      <h2>What we won't build.</h2>
+      <p>These aren't roadmap items — they're the boundaries the agent enforces in code.</p>
+    </div>
+    <div class="sec-grid">
+      <div class="sec-card">
+        <div class="flag">● NO SILENT REGISTRATION</div>
+        <h3>Every new integration is approved, not assumed</h3>
+        <p>A site can't add itself as trusted in the background. Registering a key shows the same
+          on-screen popup as any other action, naming the requester.</p>
+      </div>
+      <div class="sec-card">
+        <div class="flag">● NO HIDDEN PROCESS</div>
+        <h3>Web2OS is always visible while it runs</h3>
+        <p>A tray icon is present at all times with a live status and a one-click Dashboard.
+          If it's not in the tray, it isn't running — full stop.</p>
+      </div>
+      <div class="sec-card">
+        <div class="flag">● FULL AUDIT LOG</div>
+        <h3>Every request, allowed or denied</h3>
+        <p>The Dashboard's Activity tab shows who asked for what and when, going back through the
+          most recent requests — not just the ones that succeeded.</p>
+      </div>
+      <div class="sec-card">
+        <div class="flag">● ONE-CLICK REVOKE + PAUSE</div>
+        <h3>The user is always back in control</h3>
+        <p>Any integration can be revoked instantly from the Dashboard, and a single Pause switch
+          stops all requests from every integration at once.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="access">
+  <div class="wrap">
+    <div class="cta-band">
+      <h2>Ready to integrate?</h2>
+      <p>Get a real API key for your company right now — no waiting.</p>
+      <form class="signup-form" id="signupForm">
+        <input type="text" id="companyName" placeholder="Company name" required />
+        <input type="email" id="companyEmail" placeholder="Work email" required />
+        <button type="submit" id="signupBtn">Generate API Key</button>
+      </form>
+      <div class="signup-result" id="signupResult"></div>
+    </div>
+  </div>
+</section>
+
+<footer class="wrap">
+  <div>© 2026 Web2OS</div>
+  <div>Built to be seen, approved, and revoked — every time.</div>
+</footer>
+
+<script>
+  // Tab switching
+  document.querySelectorAll('.tab').forEach(function(tab){
+    tab.addEventListener('click', function(){
+      document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+      document.querySelectorAll('.pane').forEach(function(p){ p.classList.remove('active'); });
+      tab.classList.add('active');
+      document.getElementById('pane-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  // Live permission-popup demo
+  var demoBtn  = document.getElementById('demoBtn');
+  var popup    = document.getElementById('popup');
+  var log      = document.getElementById('demoLog');
+  var allowBtn = document.getElementById('popAllow');
+  var denyBtn  = document.getElementById('popDeny');
+
+  demoBtn.addEventListener('click', function(){
+    log.textContent = '';
+    popup.classList.add('show');
+  });
+  allowBtn.addEventListener('click', function(){
+    popup.classList.remove('show');
+    log.textContent = 'Allowed \u2014 export.csv created on the Desktop.';
+  });
+  denyBtn.addEventListener('click', function(){
+    popup.classList.remove('show');
+    log.textContent = 'Denied \u2014 nothing was written to disk.';
+  });
+
+  // Developer signup — calls the real portal backend (portal_server.py)
+  var signupForm   = document.getElementById('signupForm');
+  var signupBtn     = document.getElementById('signupBtn');
+  var signupResult  = document.getElementById('signupResult');
+
+  // If this page was opened directly (double-clicked, file:// in the address
+  // bar) there's no "same origin" server to call relatively — fall back to
+  // the portal's default local address. If it's being served BY the portal
+  // (http://127.0.0.1:9000, or a real deployment), use a relative path so it
+  // keeps working wherever it's hosted.
+  var PORTAL_BASE = (location.protocol === 'file:') ? 'http://127.0.0.1:9000' : '';
+
+  signupForm.addEventListener('submit', async function(e){
+    e.preventDefault();
+    var name  = document.getElementById('companyName').value.trim();
+    var email = document.getElementById('companyEmail').value.trim();
+    if(!name || !email){ return; }
+
+    signupBtn.disabled = true;
+    signupBtn.textContent = 'Generating…';
+    signupResult.textContent = '';
+
+    try {
+      var resp = await fetch(PORTAL_BASE + '/api/developer/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company_name: name, contact_email: email }),
+      });
+      var data = await resp.json();
+      signupResult.textContent = '';
+
+      if (data.success) {
+        var box = document.createElement('div');
+        box.className = 'key-box';
+
+        var codeEl = document.createElement('code');
+        codeEl.textContent = data.api_key;
+
+        var copyBtn = document.createElement('button');
+        copyBtn.type = 'button';
+        copyBtn.textContent = 'Copy';
+        copyBtn.addEventListener('click', function(){
+          navigator.clipboard.writeText(data.api_key);
+          copyBtn.textContent = 'Copied!';
+        });
+
+        box.appendChild(codeEl);
+        box.appendChild(copyBtn);
+
+        var note = document.createElement('p');
+        note.className = 'key-note';
+        note.textContent = data.message;
+
+        var testBtn = document.createElement('button');
+        testBtn.type = 'button';
+        testBtn.className = 'test-key-btn';
+        testBtn.textContent = 'Test this key with my local Web2OS agent';
+        testBtn.addEventListener('click', async function(){
+          testBtn.disabled = true;
+          testBtn.textContent = 'Asking your agent…';
+          try {
+            var r2 = await fetch('http://127.0.0.1:8765/api/register', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ api_key: data.api_key, client_name: name }),
+            });
+            var d2 = await r2.json();
+            testResult.textContent = d2.success
+              ? 'Approved — look for "' + name + '" in your Web2OS Dashboard now.'
+              : d2.message;
+            testResult.className = d2.success ? 'key-note' : 'key-error';
+          } catch (err2) {
+            testResult.textContent = 'Could not reach the Web2OS agent on 127.0.0.1:8765 — is main.py / Web2OS.exe running?';
+            testResult.className = 'key-error';
+          }
+          testBtn.disabled = false;
+          testBtn.textContent = 'Test this key with my local Web2OS agent';
+        });
+
+        var testResult = document.createElement('p');
+        testResult.className = 'key-note';
+
+        signupResult.appendChild(box);
+        signupResult.appendChild(note);
+        signupResult.appendChild(testBtn);
+        signupResult.appendChild(testResult);
+      } else {
+        var errEl = document.createElement('p');
+        errEl.className = 'key-error';
+        errEl.textContent = data.message;
+        signupResult.appendChild(errEl);
+      }
+    } catch (err) {
+      var offlineEl = document.createElement('p');
+      offlineEl.className = 'key-error';
+      offlineEl.textContent = (location.protocol === 'file:')
+        ? 'Could not reach the portal at http://127.0.0.1:9000 — start it with: python portal_server.py'
+        : 'Could not reach the Web2OS portal server. Make sure portal_server.py is running.';
+      signupResult.appendChild(offlineEl);
+    }
+
+    signupBtn.disabled = false;
+    signupBtn.textContent = 'Generate API Key';
+  });
+</script>
+
+</body>
+</html>

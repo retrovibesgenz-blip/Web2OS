@@ -1,0 +1,6 @@
+# Requirements for the Web2OS developer PORTAL only (portal_server.py).
+# This is what you deploy to Render — it does not need pystray/Pillow/tkinter,
+# those are desktop-only dependencies for the local agent (see requirements.txt).
+
+flask>=3.0
+gunicorn>=22.0
